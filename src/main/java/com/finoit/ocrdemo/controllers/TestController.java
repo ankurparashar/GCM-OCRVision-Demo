@@ -52,18 +52,34 @@ public class TestController {
 	public AadharModel analyzeAadhar(Map<String, Object> model,@RequestParam("fileName") MultipartFile file) throws IllegalStateException, IOException {
 
 		AadharModel aadharModel = null;
+		ByteString imgBytes = null;
 
 		// Instantiates a client
 		try (ImageAnnotatorClient vision = ImageAnnotatorClient.create()) {
 
-
 			// Reads the image file into memory
-			byte[] data = file.getBytes();
-			//byte[] data = Files.readAllBytes(path);
-			ByteString imgBytes = ByteString.copyFrom(data);
+			String contentType = file.getContentType();
+			if (contentType.equals("image/jpeg") || contentType.equals("image/png")) {
+				
+				byte[] data = file.getBytes(); 
+				imgBytes = ByteString.copyFrom(data);
+			
+			}else if(contentType.equals("application/pdf")){
+				
+				byte[] data = aadharUtility.PdfToImage(file);
+				imgBytes = ByteString.copyFrom(data);
+				
+			}else{
+				return null;
+			}
+
+
+
+
 
 			// Builds the image annotation request
 			List<AnnotateImageRequest> requests = new ArrayList<>();
+
 			Image img = Image.newBuilder().setContent(imgBytes).build();
 			Feature feat = Feature.newBuilder().setType(Type.TEXT_DETECTION).build();
 			AnnotateImageRequest request = AnnotateImageRequest.newBuilder()
@@ -76,24 +92,28 @@ public class TestController {
 			BatchAnnotateImagesResponse response = vision.batchAnnotateImages(requests);
 			List<AnnotateImageResponse> responses = response.getResponsesList();
 
-			
+
 			for (AnnotateImageResponse res : responses) {
 				if (res.hasError()) {
 					System.out.printf("Error: %s\n", res.getError().getMessage());
 					return null;
 				}
 
-				EntityAnnotation annotation = res.getTextAnnotations(0);
+				if(res.getTextAnnotationsCount() != 0){
 
-				String responseDescription =  annotation.getDescription();
-				aadharModel = aadharUtility.convertResponseToAadharModel(responseDescription);
-				model.put("aadharModel", aadharModel);
-				
+
+
+					EntityAnnotation annotation = res.getTextAnnotations(0);
+
+					String responseDescription =  annotation.getDescription();
+					aadharModel = aadharUtility.convertResponseToAadharModel(responseDescription);
+					model.put("aadharModel", aadharModel);
+				}
 			}
 		}
 
 		return aadharModel;
-	
+
 	}
 
 

@@ -65,7 +65,7 @@ aria-expanded="false" aria-label="Toggle navigation">
       <div class="row">
 
         <div class="col-md-8">
-          <img class="img-fluid" src="http://placehold.it/750x500" id="profile-img-tag" alt="" style=" width: 100%; height: 400px;">
+          <img class="img-fluid" src="http://placehold.it/750x500" id="profile-img-tag" alt="No Preview Available" style=" width: 100%; height: 400px;">
         <form action="analyze" method="post" enctype="multipart/form-data" id="fileUploadForm">
 
 			<input type="file" name="fileName" id="profile-img">
@@ -132,39 +132,50 @@ integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCm
 		// Create an FormData object 
         var data = new FormData(form);
 
-		
-		// disabled the submit button
-        $("#btnSubmit").prop("disabled", true);
+		var ext = $("#profile-img").val().split('.').pop();
+        if(ext == "jpg" || ext == "png" || ext == "jpeg" || ext == "pdf"){
+       		
+			// disabled the submit button
+			$("#btnSubmit").prop("disabled", true);
 
-        $.ajax({
-            type: "POST",
-            enctype: 'multipart/form-data',
-            url: "analyze",
-            data: data,
-            processData: false,
-            contentType: false,
-            cache: false,
-            timeout: 600000,
-            success: function (data) {
+			$.ajax({
+				type: "POST",
+				enctype: 'multipart/form-data',
+				url: "analyze",
+				data: data,
+				processData: false,
+				contentType: false,
+				cache: false,
+				timeout: 600000,
+				success: function (data) {
+				if(!data){
+				  $("#results").empty();
+				  $("#results").append("<li>Unable to Parse this image.</li>");
+				  $("#btnSubmit").prop("disabled", false);
+				
+				}else{
+					$("#results").empty();
+					$("#results").append("<li>NAME  : "+data.name+"</li>");
+					$("#results").append("<li>DOB   : "+data.dob+"</li>");
+					$("#results").append("<li>GENDER: "+data.gender+"</li>");
+					$("#results").append("<li>NUMBER: "+data.aadharNo+"</li>");
+				 	$("#results").append("<li>ADDRESS: "+data.address+"</li>");
+				   
+					$("#btnSubmit").prop("disabled", false);
+					}
 
-                $("#results").append("<li>"+data.name+"</li>")
-                $("#results").append("<li>"+data.dob+"</li>")
-                $("#results").append("<li>"+data.gender+"</li>")
-                $("#results").append("<li>"+data.aadharNo+"</li>")
-             
-               
-                $("#btnSubmit").prop("disabled", false);
+				},
+				error: function (e) {
 
-            },
-            error: function (e) {
+					$("#result").text(e.responseText);
+					console.log("ERROR : ", e);
+					$("#btnSubmit").prop("disabled", false);
 
-                $("#result").text(e.responseText);
-                console.log("ERROR : ", e);
-                $("#btnSubmit").prop("disabled", false);
-
-            }
-        });
-
+				}
+			});
+		}else{
+			alert("File Format Not Supported. Only Image or PDF Files are allowed");
+		}
     });
 
 });

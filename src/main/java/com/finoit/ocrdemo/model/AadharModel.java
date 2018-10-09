@@ -6,6 +6,7 @@ public class AadharModel {
 	String dob;
 	String gender;
 	String aadharNo;
+	String address;
 	
 	public AadharModel(){
 		
@@ -36,7 +37,12 @@ public class AadharModel {
 	public void setAadharNo(String aadharNo) {
 		this.aadharNo = aadharNo;
 	}
-	
+	public String getAddress() {
+		return address;
+	}
+	public void setAddress(String address) {
+		this.address = address;
+	}
 	
 	
 }
