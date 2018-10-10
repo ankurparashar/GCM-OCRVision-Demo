@@ -11,21 +11,24 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.imageio.ImageIO;
-import javax.swing.JOptionPane;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.rendering.ImageType;
 import org.apache.pdfbox.rendering.PDFRenderer;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.finoit.ocrdemo.model.AadharModel;
 @Component
 public class AadharUtility {
+	
+	  @Value("${file.creation.path}")
+	  private String path;
 
 	public AadharModel convertResponseToAadharModel(String responseDescription) {
-		if(responseDescription.contains("Enrolment")){
+		if(responseDescription.contains("Enrolment") || responseDescription.contains("Enrollment")){
 			return parseFullAadharResponse(responseDescription);
 		}else{
 			return parseSmallAadharResponse(responseDescription);
@@ -149,7 +152,7 @@ public class AadharUtility {
 			if(gender.length ==2){
 				model.setGender(gender[1].trim());	
 			}else{
-				String[] genderSpace = dummyGender.split(" ,");
+				String[] genderSpace = dummyGender.split(" ");
 				if(genderSpace.length ==2){
 					model.setGender(genderSpace[1].trim());
 				}else{
@@ -160,7 +163,7 @@ public class AadharUtility {
 
 			//Aadhar Number
 			if(responseDescription.contains("electronically")){
-				
+
 				Pattern zipPattern = Pattern.compile("\\d{4}\\s\\d{4}\\s\\d{4}$");
 				Matcher zipMatcher = zipPattern.matcher(allData.get(allData.size()-1));
 				if (zipMatcher.find()) {
@@ -171,7 +174,7 @@ public class AadharUtility {
 						model.setAadharNo(allData.get(allData.size()-2));
 					}
 				}
-				
+
 			}else{
 
 				String dummyAadharNumber = allData.get(k+2).trim();
@@ -196,7 +199,7 @@ public class AadharUtility {
 			StringBuffer dummyAddress = new StringBuffer();
 			for(int i=nameFirstIndex+1; i<allData.size(); i++){
 
-				dummyAddress.append(allData.get(i)+" ");
+				dummyAddress.append(allData.get(i)+" , ");
 				Matcher zipMatcher = zipPattern.matcher(allData.get(i));
 				if (zipMatcher.find()) {
 					break;
@@ -216,42 +219,30 @@ public class AadharUtility {
 	 * To convert Pdf File to Image
 	 * @param multipartFile
 	 * @return
+	 * @throws IOException 
 	 */
-	public byte[] PdfToImage(MultipartFile multipartFile){
-		try{
+	public byte[] PdfToImage(MultipartFile multipartFile) throws IOException{
+		
 
 			File file = convert(multipartFile);
 			PDDocument document = PDDocument.load(file);
 			PDPage pd;
 
 			PDFRenderer pdfRenderer = new PDFRenderer(document);
-			for (int page = 0; page < document.getNumberOfPages(); ++page)
-			{
 
 
-				pd = document.getPage(page);
-				//pd.setCropBox(new PDRectangle(100, 100,100,100));
-				BufferedImage bim = pdfRenderer.renderImageWithDPI(page, 300, ImageType.RGB);
+			pd = document.getPage(0);
+			//pd.setCropBox(new PDRectangle(100, 100,100,100));
+			BufferedImage bim = pdfRenderer.renderImageWithDPI(0, 300, ImageType.RGB);
 
-				ByteArrayOutputStream baos = new ByteArrayOutputStream();
-				ImageIO.write( bim, "jpg", baos );
-				baos.flush();
-				byte[] imageInByte = baos.toByteArray();
-				//ImageIOUtil.writeImage(bim, "C:\\Users\\emp279\\Desktop\\" + (page+1) + ".png", 300);
-				baos.close();
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			ImageIO.write( bim, "jpg", baos );
+			baos.flush();
+			byte[] imageInByte = baos.toByteArray();
+			//ImageIOUtil.writeImage(bim, "C:\\Users\\emp279\\Desktop\\" + (page+1) + ".png", 300);
+			baos.close();
 
-				return imageInByte;
-
-
-
-			}
-
-
-		}catch (Exception ex){
-			JOptionPane.showMessageDialog(null, ex.getStackTrace());
-
-		}
-		return null;
+			return imageInByte;
 
 	}
 
@@ -261,7 +252,7 @@ public class AadharUtility {
 	 */
 	private File convert(MultipartFile file) throws IOException
 	{    
-		File convFile = new File(file.getOriginalFilename());
+		File convFile = new File(path+file.getOriginalFilename());
 		convFile.createNewFile(); 
 		FileOutputStream fos = new FileOutputStream(convFile); 
 		fos.write(file.getBytes());

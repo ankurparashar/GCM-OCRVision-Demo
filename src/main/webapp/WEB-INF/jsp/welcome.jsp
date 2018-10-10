@@ -59,8 +59,9 @@ aria-expanded="false" aria-label="Toggle navigation">
 
       <!-- Portfolio Item Heading -->
            <h3 class="my-4">
-        Please upload an image to Parse
+        Please upload Aadhar File to Parse
       </h3>
+      <h4>Only JPG, PNG AND PDF Supported</h4>
       <!-- Portfolio Item Row -->
       <div class="row">
 
